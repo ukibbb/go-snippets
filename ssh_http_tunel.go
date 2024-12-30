@@ -17,14 +17,17 @@ type Tunnel struct {
 	donech chan struct{}
 }
 
+// communication mechanism between http and ssh handler
 var tunnels = map[int]chan Tunnel{}
 
 func main() {
 
 	go func() {
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
 			idstr := r.URL.Query().Get("id")
 			id, _ := strconv.Atoi(idstr)
+			// checks if tunnel is created in ssh session
 			tunnel, ok := tunnels[id]
 
 			if !ok {
@@ -32,6 +35,7 @@ func main() {
 				return
 			}
 			donech := make(chan struct{})
+			// sending tunnel to ssh session
 			tunnel <- Tunnel{
 				w:      w,
 				donech: donech,
@@ -43,19 +47,25 @@ func main() {
 	}()
 
 	ssh.Handle(func(s ssh.Session) {
+		// creates rand tunnel id
 		id := rand.Intn(math.MaxInt)
+		// initializes new channel
 		tunnels[id] = make(chan Tunnel)
 
 		fmt.Println("tunnel id -> ", id)
 
+		// waits for tunnel from http handler
 		tunnel := <-tunnels[id]
 
 		fmt.Println("Channel is ready.")
 
+		// once tunnel is ready
+		// copies data from the ssh session to the http response writer
 		_, err := io.Copy(tunnel.w, s)
 		if err != nil {
 			log.Fatal(err)
 		}
+		// singnals completion closing donech
 		close(tunnel.donech)
 
 		s.Write([]byte("We are done!"))
