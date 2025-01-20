@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/ukibbb/go-snippets/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // ///////////////////////////////////////////////
@@ -180,5 +184,61 @@ func (c *Client) FetchPrice(ctx context.Context, ticker string) (*PriceResponse,
 	}
 
 	return priceResp, nil
+
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+func NewGRPCClient(remoteAddr string) (proto.PriceFetcherClient, error) {
+	// conn, err := grpc.Dial(remoteAddr, grpc.WithInsecure())
+	conn, err := grpc.NewClient(remoteAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+
+	c := proto.NewPriceFetcherClient(conn)
+	return c, nil
+
+}
+
+func MakeGRPCServerAndRun(listenAddr string, svc PriceFetcher) error {
+	grpcPriceFetcher := NewGRPCPriceFetcher(svc)
+	ln, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return err
+	}
+	opts := []grpc.ServerOption{}
+	server := grpc.NewServer(opts...)
+	proto.RegisterPriceFetcherServer(server, grpcPriceFetcher)
+
+	return server.Serve(ln)
+
+}
+
+type GRPCPriceFetcherServer struct {
+	svc PriceFetcher
+	proto.UnimplementedPriceFetcherServer
+}
+
+func NewGRPCPriceFetcher(svc PriceFetcher) *GRPCPriceFetcherServer {
+	return &GRPCPriceFetcherServer{
+		svc: svc,
+	}
+}
+
+type RequestID string
+
+func (s *GRPCPriceFetcherServer) FetchPrice(ctx context.Context, req *proto.PriceRequest) (*proto.PriceResponse, error) {
+	reqid := rand.Intn(100000000000)
+	ctx = context.WithValue(ctx, RequestID("requestID"), reqid)
+	price, err := s.svc.FetchPrice(ctx, req.Ticker)
+	if err != nil {
+		return nil, err
+	}
+	resp := &proto.PriceResponse{
+		Ticker: req.Ticker,
+		Price:  float32(price),
+	}
+	return resp, err
 
 }
