@@ -3,10 +3,10 @@ ssh:
 	@cat ssh_http_tunel.go | ssh localhost -p 2222
 	
 build:
-	go build -o bin/price
+	@go build -o bin/price
 
 run: build
-	./bin/price
+	@./bin/price
 
 proto:
 	protoc --go_out=. --go_opt=paths=source_relative \
@@ -14,3 +14,7 @@ proto:
 	proto/service.proto
 
 .PHONY: proto
+
+
+redis:
+	docker run --name redis -p 6379:6379 redis:latest 
