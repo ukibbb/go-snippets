@@ -5,6 +5,7 @@ go 1.22.2
 require (
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/confluentinc/confluent-kafka-go v1.9.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gliderlabs/ssh v0.3.8 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect

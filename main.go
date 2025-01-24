@@ -1,11 +1,5 @@
 package main
 
-import (
-	"fmt"
-
-	"github.com/go-redis/redis/v8"
-)
-
 //func grpcf() {
 //	svc := NewMetricService(NewLoggingService(&priceFetcher{}))
 //
@@ -33,18 +27,22 @@ import (
 //	server.Run()
 //}
 
+// func redisCache() {
+//
+// 	client := redis.NewClient(&redis.Options{
+// 		Addr:     "localhost:6379",
+// 		Password: "",
+// 		DB:       0,
+// 	})
+//
+// 	s := NewStore(NewRedisCache(client))
+//
+// 	s.cache.Set(1, "value")
+// 	val, err := s.Get(1)
+//
+// 	fmt.Println(val, err)
+// }
+
 func main() {
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
-
-	s := NewStore(NewRedisCache(client))
-
-	s.cache.Set(1, "value")
-	val, err := s.Get(1)
-
-	fmt.Println(val, err)
 }
